@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isImageURL, setImageURL] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +32,7 @@ export default function Home() {
 
   return (
     // TODO: Update the UI here to show the images generated
-    
+
     <div className="min-h-screen flex flex-col justify-between p-8">
       <main className="flex-1">{/* Main content can go here */}</main>
 
@@ -59,3 +60,5 @@ export default function Home() {
     </div>
   );
 }
+
+//Todo refactor the code to make a request to the server to make the secure api URL
