@@ -1,5 +1,6 @@
-import { error } from "console";
 import { NextResponse } from "next/server";
+import {put} from "@vercel/blob";
+import { error } from "console";
 
 export async function POST(request: Request) {
   try {
@@ -8,36 +9,45 @@ export async function POST(request: Request) {
 
     // TODO: Call your Image Generation API here
     // For now, we'll just echo back the text
+    if (!process.env.URL) {
+        throw new Error("URL environment variable is not defined");
+    }
+    const url = new URL(process.env.URL);
+
+    url.searchParams.set("prompt", text)
 
 
-    //Validation of valid prompt
-    if(!text || text.trim() === ""){
-      return NextResponse.json({
-        success: false, error: "No prompt was provided"
-      },
-    {status: 400});
+    console.log("Requating URL: ", url.toString());
+
+    const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+            "X-API-KEY": process.env.API_KEY || "",
+            Accept: "image/jpeg",
+        },
+    });
+
+    if (!response.ok) {
+        const errorMsg = await response.text();
+        console.log("API response: ", errorMsg);
+        throw new Error(
+            `HTTP error status: ${response.status}, message: ${errorMsg}`
+        ) 
     }
 
-    //Calling the wependpoint from Modal
-    const webEndPoint = `https://luciano665--pixelalchemy-inference-web-dev.modal.run/?prompt=${encodeURI(text)}`;
+    const imageBuffer = await response.arrayBuffer();
 
-    const response = await fetch(webEndPoint);
+    const fileName = `${crypto.randomUUID()}.jpg`
 
-    if(!response.ok){
-      throw new Error("Got and errro trying to generate the image");
-    }
-
-    //We need the image in the binary values = which is the image data
-    const buffer = await response.arrayBuffer();
-    const img64 = Buffer.from(buffer).toString("base64");
-
-    //Create data URL form IMG
-    const dataURL = `data:image/jpeg;base64,${img64}`;
+    const blob = await put(fileName, imageBuffer, {
+        access: "public",
+        contentType: "image/jpeg"
+    })
 
 
     return NextResponse.json({
       success: true,
-      image: dataURL,
+      imageUrl: blob.url,
     });
   } catch (error) {
     return NextResponse.json(
@@ -46,3 +56,4 @@ export async function POST(request: Request) {
     );
   }
 }
+
