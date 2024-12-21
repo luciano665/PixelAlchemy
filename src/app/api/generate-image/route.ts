@@ -7,6 +7,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { text } = body;
 
+    const apiSecret = request.headers.get("custom-secret");
+    //Valdation of secret
+    if(apiSecret !== process.env.API_KEY){
+      return NextResponse.json({error: "UNAUTHORIZED"}, {status: 401})
+    }
+
     // TODO: Call your Image Generation API here
     // For now, we'll just echo back the text
     if (!process.env.URL) {
@@ -22,7 +28,7 @@ export async function POST(request: Request) {
     const response = await fetch(url.toString(), {
         method: "GET",
         headers: {
-            "X-API-KEY": process.env.API_KEY || "",
+            "X_API_KEY": process.env.API_KEY || "",
             Accept: "image/jpeg",
         },
     });
