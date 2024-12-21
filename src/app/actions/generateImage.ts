@@ -10,13 +10,14 @@ export async function generateImage(text: string) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X_API_SECRET": process.env.API_SECRET || "",
+                "x_API_SECRET": process.env.API_KEY || "",
             },
             body: JSON.stringify({text})
         });
 
         if(!response.ok){
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.log(response.text)
+            throw new Error(`HTTP error! status: ${response.statusText}`);
         }
 
         const data = await response.json()

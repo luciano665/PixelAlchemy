@@ -1,34 +1,29 @@
 import { NextResponse } from "next/server";
 import {put} from "@vercel/blob";
-import { error } from "console";
+
+ 
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { text } = body;
 
-    const apiSecret = request.headers.get("custom-secret");
-    //Valdation of secret
-    if(apiSecret !== process.env.API_KEY){
-      return NextResponse.json({error: "UNAUTHORIZED"}, {status: 401})
+    if(!text || typeof text != "string"){
+      throw new Error("Invalid prompt, you need to provide string.")
     }
 
-    // TODO: Call your Image Generation API here
-    // For now, we'll just echo back the text
-    if (!process.env.URL) {
-        throw new Error("URL environment variable is not defined");
-    }
-    const url = new URL(process.env.URL);
+    console.log("Prompt was recieved", text);
 
+   
+    const url = new URL("https://luciano665--pixelalchemy-model-generate.modal.run");
     url.searchParams.set("prompt", text)
-
-
+    
     console.log("Requating URL: ", url.toString());
 
     const response = await fetch(url.toString(), {
         method: "GET",
         headers: {
-            "X_API_KEY": process.env.API_KEY || "",
+            "x_API_KEY": process.env.API_KEY || "",
             Accept: "image/jpeg",
         },
     });
@@ -38,16 +33,16 @@ export async function POST(request: Request) {
         console.log("API response: ", errorMsg);
         throw new Error(
             `HTTP error status: ${response.status}, message: ${errorMsg}`
-        ) 
+        ); 
     }
 
     const imageBuffer = await response.arrayBuffer();
-
     const fileName = `${crypto.randomUUID()}.jpg`
 
     const blob = await put(fileName, imageBuffer, {
         access: "public",
-        contentType: "image/jpeg"
+        contentType: "image/jpeg",
+        token: process.env.BLOB_READ_WRITE_TOKEN
     })
 
 
@@ -57,7 +52,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: "Failed to process request" },
+      { success: false, error: error instanceof Error ? error.message : "Failed to generate image",
+        details: error instanceof Error ? error.stack: undefined,
+       },
       { status: 500 }
     );
   }

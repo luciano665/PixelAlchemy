@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { generateImage } from "../actions/generateImage";
 interface ImageGeneratorProps {
   generateImage: (
     text: string
@@ -24,18 +24,14 @@ export default function ImageGenerator({ generateImage }: ImageGeneratorProps) {
       const result = await generateImage(inputText);
 
       if (!result.success) {
+        console.log(result.error);
         throw new Error(
           result.error || "Failed trying to generate the Image 😖"
         );
       }
 
       if (result.imageUrl) {
-        const img = new Image();
-        const url = result.imageUrl;
-        img.onload = () => {
-          setImageURL(url);
-        };
-        img.src = url;
+        setImageURL(result.imageUrl);
       } else {
         throw new Error("No image URL was recieved 😭");
       }
@@ -95,7 +91,7 @@ export default function ImageGenerator({ generateImage }: ImageGeneratorProps) {
             />
             <button
               type="submit"
-              disabled={isLoading || !inputText.trim()}
+              disabled={isLoading}
               className="px-6 py-3 rounded-lg bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc] transition-colors disabled:opacity-50"
             >
               {isLoading ? "Generating..." : "Generate"}
