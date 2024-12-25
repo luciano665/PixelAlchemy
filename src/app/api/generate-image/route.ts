@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import {put} from "@vercel/blob";
+import {put, list} from "@vercel/blob";
+import crypto from "crypto";
+
+interface Blob {
+  url: string;
+}
+
 
  
 
@@ -56,6 +62,37 @@ export async function POST(request: Request) {
         details: error instanceof Error ? error.stack: undefined,
        },
       { status: 500 }
+    );
+  }
+}
+
+//Fecth images
+export async function GET() {
+  try {
+    const {blobs}: {blobs: Blob[]} = await list();
+    if(!blobs || blobs.length === 0) {
+      console.log("No saved images found");
+      return NextResponse.json({
+        success: true,
+        imageUrls: [],
+      });
+    }
+    const imageUrls = blobs.map(blob => blob.url);
+
+    console.log("Fetched images saved:", imageUrls);
+
+    return NextResponse.json({
+      success: true,
+      imageUrls,
+    });
+  } catch(error: unknown){
+    console.log("An error occur trying to fetch from BLOB", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: (error as Error).message || "Fail fetching images"
+      },
+      {status: 500}
     );
   }
 }
