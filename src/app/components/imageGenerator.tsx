@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { generateImage } from "../actions/generateImage";
+import { useEffect, useState } from "react";
+//import { generateImage } from "../actions/generateImage";
 interface ImageGeneratorProps {
   generateImage: (
     text: string
@@ -13,6 +13,36 @@ export default function ImageGenerator({ generateImage }: ImageGeneratorProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  //States to display images generated before
+  const [savedImages, setSavedImages] = useState<string[]>([]);
+  const [loadingImages, setImagesLoading] = useState(true);
+
+  useEffect(() => {
+    const fetcheSavedImages = async () => {
+      try {
+        const response = await fetch("/api/generate-image", {
+          method: "GET",
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(
+            data.error || "Failed to fetch images generated before"
+          );
+        }
+        setSavedImages(data.imageUrl || []);
+      } catch (error) {
+        console.log("Error fectching imagaes", error);
+        setError("Unable to load images");
+      } finally {
+        setImagesLoading(false);
+      }
+    };
+    fetcheSavedImages();
+  }, []);
+
+  // Submit handle
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +106,32 @@ export default function ImageGenerator({ generateImage }: ImageGeneratorProps) {
             />
           </div>
         )}
+
+        {/* SAVED IMAGES DISPLAY */}
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">SAVED IMAGES</h2>
+          {loadingImages && <p>Loading images 🔎....</p>}
+
+          {!loadingImages && savedImages.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {savedImages.map((url, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg overflow-hidden shadow-lg"
+                >
+                  <img
+                    src={url}
+                    alt={`Saved image ${index + 1}`}
+                    className="w-full h-auto object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {!loadingImages && savedImages.length === 0 && (
+            <p className="text-gray-600">No saved images found</p>
+          )}
+        </div>
       </main>
 
       <footer className="w-full max-w-3xl mx-auto">
