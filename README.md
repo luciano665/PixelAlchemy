@@ -1,4 +1,4 @@
-# Pentagram: Instagram, but with AI Images
+# PixelAlchemy with AI Images
 
 ## Getting Started
 
